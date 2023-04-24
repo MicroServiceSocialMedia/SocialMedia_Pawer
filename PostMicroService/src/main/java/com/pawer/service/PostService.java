@@ -1,33 +1,27 @@
 package com.pawer.service;
 
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
-import com.pawer.dto.request.CommentToPostDto;
-import com.pawer.rabbitmq.messagemodel.ModelCreateCommentToPost;
+//import com.google.cloud.storage.BlobId;
+//import com.google.cloud.storage.BlobInfo;
+//import com.google.cloud.storage.Storage;
+
+import com.pawer.dto.response.PostFindAllResponse;
+import com.pawer.exception.EErrorType;
+import com.pawer.exception.PostException;
+import com.pawer.rabbitmq.consumer.Consumers;
 import com.pawer.rabbitmq.messagemodel.ModelCreatePost;
+import com.pawer.rabbitmq.messagemodel.ModelFollowId;
 import com.pawer.repository.ICommentToPostRepository;
 import com.pawer.repository.IPostRepository;
-import com.pawer.repository.entity.CommentToPost;
 import com.pawer.repository.entity.Post;
 import com.pawer.utility.JwtTokenManager;
 import com.pawer.utility.ServiceManagerImpl;
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class PostService extends ServiceManagerImpl<Post,String> {
@@ -35,104 +29,149 @@ public class PostService extends ServiceManagerImpl<Post,String> {
     private final IPostRepository postrepository;
     private final JwtTokenManager jwtTokenManager;
     private final ICommentToPostRepository commentToPostRepository;
-    @Value("${myproject.google.storage.bucketname}")
-    private String bucketname;
+    private final FavToPostService favToPostService;
+    private final LikeToPostService likeToPostService;
+    private ModelFollowId model;
 
-    @Getter
-    @Autowired
-    Storage storage;
-
-
-
-    int a=0;
-
-    public PostService(IPostRepository postrepository, JwtTokenManager jwtTokenManager, ICommentToPostRepository commentToPostRepository) {
+    public PostService(IPostRepository postrepository, JwtTokenManager jwtTokenManager, @Lazy ICommentToPostRepository commentToPostRepository
+            , @Lazy FavToPostService favToPostService,@Lazy  LikeToPostService likeToPostService) {
         super(postrepository);
         this.postrepository = postrepository;
         this.jwtTokenManager = jwtTokenManager;
         this.commentToPostRepository = commentToPostRepository;
+        this.favToPostService = favToPostService;
+        this.likeToPostService = likeToPostService;
     }
 
 
     public void savePost(ModelCreatePost modelCreatePost){
-        String resim_id = UUID.randomUUID().toString();
         Long id = jwtTokenManager.validToken(modelCreatePost.getToken()).get();
+        Post post = Post.builder()
+                .userId(id)
+                .content(modelCreatePost.getContent())
+                .name(modelCreatePost.getName())
+                .username(modelCreatePost.getUsername())
+                .likeCount(0)
+              .build();
+        save(post);
+
+    }
 
 
-        //---
-        try{
-            Optional<String> resimurl = uploadFile(modelCreatePost.getImage());
-            if(resimurl.isPresent()){
-                Post post = Post.builder()
-                        .userId(id)
-                        .content(modelCreatePost.getContent())
-                        .name(modelCreatePost.getName())
-                        .username(modelCreatePost.getUsername())
-                        .url(resimurl.get()).build();
-                save(post);
-            }
-        }catch (Exception ex){
-            System.out.println("****************************************");
-            //ekranaYildizBastirma(100);
-            System.out.println("post kayit ederken hata oldu "+ex.getMessage());
+    public Page<PostFindAllResponse> findAllPosts(String token,
+                                                  Integer pageSize,
+                                                  int currentPage, Sort.Direction direction,
+                                                  String sortingParameter){
+        if (token == null || token == "") {
+            throw new PostException(EErrorType.INVALID_TOKEN);
         }
-    }
-
-
-    public Page<Post> findAll(Integer pageSize, int currentPage, Sort.Direction direction, String sortingParameter){
+        Long userId = jwtTokenManager.validToken(token).get();
         Pageable pageable = PageRequest.of(currentPage,  pageSize ,Sort.by(direction, sortingParameter) );
-        return postrepository.findAll(pageable);
+        List<PostFindAllResponse> postFindAllResponses = new ArrayList<>();
+
+        for(Post post: homePagePosts(model)){
+            PostFindAllResponse postFindAllResponse = new PostFindAllResponse();
+            postFindAllResponse.setId(post.getId());
+            postFindAllResponse.setUserId(post.getUserId());
+            postFindAllResponse.setUsername(post.getUsername());
+            postFindAllResponse.setName(post.getName());
+            postFindAllResponse.setSurname(post.getSurname());
+            postFindAllResponse.setContent(post.getContent());
+            postFindAllResponse.setUrl(post.getUrl());
+            postFindAllResponse.setLikeCount(post.getLikeCount());
+            postFindAllResponse.setDate(post.getDate());
+            postFindAllResponse.setTime(post.getTime());
+            postFindAllResponse.setIsFav(favToPostService.findFavToPostBoolean(post.getId(),userId));
+            postFindAllResponse.setIsLiked(likeToPostService.findByPostIdAndUserIdBoolean(post.getId(), userId));
+            postFindAllResponses.add(postFindAllResponse);
+        }
+        Page<PostFindAllResponse> myPage = new PageImpl<>(postFindAllResponses, pageable, postFindAllResponses.size());
+
+        return myPage;
     }
 
-    public Page<Post> findAllPlus(Integer pageSize, Integer currentPage, Sort.Direction direction, String sortingParameter){
-        // for kontrolü ile sayfa sayısı kontrol edilecek.
-        a++;
-        Pageable pageable = PageRequest.of(a,  pageSize ,Sort.by(direction, sortingParameter) );
-        return postrepository.findAll(pageable);
-    }
 
-
-    public Page<Post> findAllMinus(Integer pageSize, Integer currentPage, Sort.Direction direction, String sortingParameter){
-        // for kontrolü ile sayfa sayısı kontrol edilecek.
-        a--;
-        Pageable pageable = PageRequest.of(a,  pageSize ,Sort.by(direction, sortingParameter) );
-        return postrepository.findAll(pageable);
-    }
-
-    public  Page<Post> findByToken(String token,
-                                             Integer pageSize,
-                                             int currentPage, Sort.Direction direction,
-                                             String sortingParameter){
+    public  Page<Post> myPost(String token,
+                              Integer pageSize,
+                              int currentPage, Sort.Direction direction,
+                              String sortingParameter){
         Long userid = jwtTokenManager.validToken(token).get();
         Pageable pageable = PageRequest.of(currentPage,  pageSize ,Sort.by(direction, sortingParameter) );
         return postrepository.findByUserId(userid,pageable);
     }
-    public void createCommentToPost(ModelCreateCommentToPost model){
-        System.out.println("post servisi create comment");
-        CommentToPost commentToPost= new CommentToPost();
-        Long userId = jwtTokenManager.validToken(model.getToken()).get();
-        commentToPost.setComment(model.getComment());
-        commentToPost.setUserId(userId);
-        commentToPost.setPostId(model.getPostId());
-        commentToPostRepository.save(commentToPost);
-    }
 
-    public List<CommentToPost> findAllComment(CommentToPostDto dto){
-        List<CommentToPost> comments= new ArrayList<>();
-        for (CommentToPost comment: commentToPostRepository.findByPostId(dto.getPostId()).get()){
-            comments.add(comment);
+
+
+    public List<Post> homePagePosts(ModelFollowId model){
+        this.model=model;
+        System.out.println("model ici gelen mesaj:... "+model.toString());
+        List<Post> posts = new ArrayList<>();
+        for (Long folloId: model.getFollodId()){
+            Optional<List<Post>> posts1= postrepository.findOptionalByUserId(folloId);
+            for (Post post : posts1.get()){
+                posts.add(post);
+            }
         }
+        System.out.println("postss " + posts.toString());
+        return posts;
+    }
 
-        return comments;
-
+    public List<Post> discover(ModelFollowId model){
+        this.model=model;
+        System.out.println("model ici gelen mesaj:... "+model.toString());
+        List<Post> posts = new ArrayList<>();
+        for (Long folloId: model.getFollodId()){
+            Optional<List<Post>> posts1= postrepository.findOptionalByUserId(folloId);
+            for (Post post : posts1.get()){
+                posts.add(post);
+            }
+        }
+        List<Post> findallPosts= findAll();
+        findallPosts.removeAll(posts);
+        System.out.println("postss " + findallPosts.toString());
+        return findallPosts;
     }
 
 
+    public Page<PostFindAllResponse> discoverPage(String token,
+                                                  Integer pageSize,
+                                                  int currentPage, Sort.Direction direction,
+                                                  String sortingParameter){
+        if (token == null || token == "") {
+            throw new PostException(EErrorType.INVALID_TOKEN);
+        }
+        Long userId = jwtTokenManager.validToken(token).get();
+        Pageable pageable = PageRequest.of(currentPage,  pageSize ,Sort.by(direction, sortingParameter) );
+        List<PostFindAllResponse> postFindAllResponses = new ArrayList<>();
 
+        for(Post post: discover(model)){
+            if (post.getUserId()!=userId){
+
+
+            PostFindAllResponse postFindAllResponse = new PostFindAllResponse();
+            postFindAllResponse.setId(post.getId());
+            postFindAllResponse.setUserId(post.getUserId());
+            postFindAllResponse.setUsername(post.getUsername());
+            postFindAllResponse.setName(post.getName());
+            postFindAllResponse.setSurname(post.getSurname());
+            postFindAllResponse.setContent(post.getContent());
+            postFindAllResponse.setUrl(post.getUrl());
+            postFindAllResponse.setLikeCount(post.getLikeCount());
+            postFindAllResponse.setDate(post.getDate());
+            postFindAllResponse.setTime(post.getTime());
+            postFindAllResponse.setIsFav(favToPostService.findFavToPostBoolean(post.getId(),userId));
+            postFindAllResponse.setIsLiked(likeToPostService.findByPostIdAndUserIdBoolean(post.getId(), userId));
+            postFindAllResponses.add(postFindAllResponse);
+            }
+        }
+        Page<PostFindAllResponse> myPage = new PageImpl<>(postFindAllResponses, pageable, postFindAllResponses.size());
+
+        return myPage;
+    }
 
     /**storage
      *  baslangic
-     */
+
 
     public Optional<String> uploadFile(MultipartFile file){
         try {
@@ -172,7 +211,7 @@ public class PostService extends ServiceManagerImpl<Post,String> {
     }
 
 
-    /**
+
      * storage
      * baslangic
      */
@@ -188,14 +227,6 @@ public class PostService extends ServiceManagerImpl<Post,String> {
         }
         return yildiz.toString();
     }
-
-
-//    public Page<Post>findAllByUserId(Integer pageSize, Integer currentPage,String direction,  String sortingParameter,String token){
-//        Pageable pageable = PageRequest.of(currentPage,  pageSize ,Sort.by(direction, sortingParameter) );
-//        List<Page<Post>> posts = Collections.singletonList(postrepository.findAll(pageable));
-//        Long id = jwtTokenManager.validToken(token).get();
-//        return postrepository.findAll(pageable);
-//    }
 
 
 }

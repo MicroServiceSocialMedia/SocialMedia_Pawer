@@ -1,7 +1,6 @@
 package com.pawer.rabbitmq.messagemodel;
 
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
 
@@ -11,10 +10,11 @@ import java.io.Serializable;
 @NoArgsConstructor
 @ToString
 public class ModelCreatePost implements Serializable {
+
     private String username;
     private String name;
     private String surname;
     private String content;
     private String token;
-    private MultipartFile image;
+    //private MultipartFile image;
 }

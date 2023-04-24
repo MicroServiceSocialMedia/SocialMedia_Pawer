@@ -1,8 +1,6 @@
 package com.pawer.rabbitmq.producer;
 
-import com.pawer.rabbitmq.messagemodel.ModelCreateCommentToPost;
-import com.pawer.rabbitmq.messagemodel.ModelCreatePost;
-import com.pawer.rabbitmq.messagemodel.ModelUpdateUser;
+import com.pawer.rabbitmq.messagemodel.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
@@ -13,17 +11,17 @@ public class ProducerDirectService {
     private final RabbitTemplate rabbitTemplate;
 
     public void sendCreatePost(ModelCreatePost modelCreatePost){
-        rabbitTemplate.convertAndSend("exchange-direct","binding-key-create-post",modelCreatePost);
+        rabbitTemplate.convertAndSend("exchange-topic","binding-key-create-post-topic",modelCreatePost);
+        rabbitTemplate.convertAndSend("exchange-topic","binding-key-create-post-topic-elastic",modelCreatePost);
     }
 
     public void sendUpdateUser(ModelUpdateUser model){
         rabbitTemplate.convertAndSend("exchange-direct","binding-key-update-user",model);
     }
 
-    public void sendCreateCommentToPost(ModelCreateCommentToPost model){
-        rabbitTemplate.convertAndSend("exchange-direct","binding-key-create-comment-to-post",model);
+    public void sendFollodId(ModelFollowId model){
+        rabbitTemplate.convertAndSend("exchange-direct","binding-key-follow-posts",model);
     }
-
 
 
 }

@@ -3,33 +3,31 @@ package com.pawer.service;
 //import com.google.cloud.storage.BlobId;
 //import com.google.cloud.storage.BlobInfo;
 //import com.google.cloud.storage.Storage;
+
 import com.pawer.dto.request.*;
 import com.pawer.dto.response.FindByIdResponseDto;
+import com.pawer.dto.response.ProfileCartResponse;
 import com.pawer.exception.EErrorType;
 import com.pawer.exception.UserException;
 import com.pawer.mapper.IPostMapper;
 import com.pawer.mapper.IUserMapper;
 import com.pawer.rabbitmq.messagemodel.ModelCreatePost;
-import com.pawer.rabbitmq.messagemodel.ModelUserSave;
+import com.pawer.rabbitmq.messagemodel.ModelFollowId;
 import com.pawer.rabbitmq.messagemodel.ModelUpdateUser;
+import com.pawer.rabbitmq.messagemodel.ModelUserSave;
 import com.pawer.rabbitmq.producer.ProducerDirectService;
 import com.pawer.repository.IUserRepository;
+import com.pawer.repository.entity.Follow;
 import com.pawer.repository.entity.User;
 import com.pawer.utility.JwtTokenManager;
 import com.pawer.utility.ServiceManagerImpl;
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService extends ServiceManagerImpl<User, Long> {
@@ -39,6 +37,7 @@ public class UserService extends ServiceManagerImpl<User, Long> {
     private final JwtTokenManager jwtTokenManager;
     private final FollowService followService;
     private final FollowerService followerService;
+
 
 //    @Value("${myproject.google.storage.bucketname}")
 //    private String bucketname;
@@ -54,9 +53,6 @@ public class UserService extends ServiceManagerImpl<User, Long> {
         this.jwtTokenManager = jwtTokenManager;
         this.followService = followService;
         this.followerService = followerService;
-    }
-    public Optional<List<User>> findOptionaldistById(Long a){
-        return userRepository.findByIdGreaterThan(a);
     }
 
 
@@ -79,15 +75,13 @@ public class UserService extends ServiceManagerImpl<User, Long> {
 
     public Boolean createPost(CreatePostDto dto) {
         Optional<Long> id = jwtTokenManager.validToken(dto.getToken());
-        System.out.println("----------------------------" + dto.getToken());
-        System.out.println("----------------------------" + id);
         if (id.isEmpty()) throw new UserException(EErrorType.INVALID_TOKEN);
         User user = findById(id.get()).get();
         ModelCreatePost modelCreatePost = IPostMapper.INSTANCE.toCreatePost(user);
         modelCreatePost.setToken(dto.getToken());
         modelCreatePost.setContent(dto.getContent());
-        modelCreatePost.setImage(dto.getImage());
-        System.out.println(modelCreatePost.getImage());
+        //modelCreatePost.setImage(dto.getImage());
+        //System.out.println(modelCreatePost.getImage());
         producerDirectService.sendCreatePost(modelCreatePost);
         return true;
     }
@@ -116,7 +110,7 @@ public class UserService extends ServiceManagerImpl<User, Long> {
         return true;
     }
 
-    public FindByIdResponseDto findByIdFromToken(FindByIdRequestDto dto) {
+    public FindByIdResponseDto findByIdFromToken(BaseRequestDto dto) {
         Optional<Long> userId = jwtTokenManager.validToken(dto.getToken());
         if (userId.isEmpty()) {
             throw new UserException(EErrorType.INVALID_TOKEN);
@@ -126,17 +120,65 @@ public class UserService extends ServiceManagerImpl<User, Long> {
         return IUserMapper.INSTANCE.toFindByIdResponseDto(user.get());
     }
 
-    public boolean createCommentToPost(CommentToPostDto dto) {
-        if (dto.getComment() == null || dto.getComment() == "" || dto.getToken() == null || dto.getToken() == "") {
-            throw new UserException(EErrorType.BAD_REQUEST_ERROR, "create comment de hata eksik veya hatali bilgi");
-        }
-        producerDirectService.sendCreateCommentToPost(IPostMapper.INSTANCE.toCreateComment(dto));
-        return true;
-    }
+
+
+
 
     public Optional<User> findOptionalByUsername(String username){
         return userRepository.findOptionalByUsername(username);
     }
+
+
+
+    public List<ProfileCartResponse> isFollow(BaseRequestDto dto){
+        Long userId= jwtTokenManager.validToken(dto.getToken()).get();
+        Optional<List<Follow>> follows= followService.isFollow(userId);         // beni 0 takip etmiyor, 1 bana takip isteği atmış,2 beni takip ediyor
+        List<ProfileCartResponse>  profileCartResponses = new ArrayList<>();
+        ProfileCartResponse profileCartResponse = new ProfileCartResponse();
+        int i=0;
+        if (follows.isPresent()){
+        for (Follow f: follows.get()){
+            profileCartResponse= new ProfileCartResponse();
+            User user = findById(f.getFollowId()).get();
+            profileCartResponse.setJob(user.getJob());
+            profileCartResponse.setAvatar(user.getAvatar());
+            profileCartResponse.setName(user.getName());
+            profileCartResponse.setSurname(user.getSurname());
+            profileCartResponse.setUsername(user.getUsername());
+            profileCartResponse.setPostCount(0);
+            //ben karttaki kullanıcıyı takip ediyor muyum?
+            profileCartResponse.setFollow(f.getFollowRequest()==0 ? "Takip Et" : (f.getFollowRequest()==1 ? "İstek Gönderildi" : "Takiptesin") );
+            profileCartResponses.add(profileCartResponse);
+
+        }
+
+          //  profileCartResponse.setFollower(follower.getStatee()==0 ? "Takip Etmiyor":(follower.getStatee()==1 ? "Kabul Et" : "Cikart"));
+
+        for (ProfileCartResponse responses : profileCartResponses){
+            if (i<followerService.isFollower(userId).size()){
+                responses.setFollower(followerService.isFollower(userId).get(i).getStatee()==0 ? "Takip Etmiyor":(followerService.isFollower(userId).get(i).getStatee()==1 ? "Cevap Bekleniyor" : "Cikart"));
+            i++;
+            }
+        }
+
+        }
+        return profileCartResponses;
+    }
+    public FindByIdResponseDto findMe(BaseRequestDto dto){
+        Optional<Long> userId= jwtTokenManager.validToken(dto.getToken());
+        User user=findById(userId.get()).get();
+        FindByIdResponseDto findByIdResponseDto= new FindByIdResponseDto();
+        findByIdResponseDto.setName(user.getName());
+        findByIdResponseDto.setSurname(user.getSurname());
+        findByIdResponseDto.setUsername(user.getUsername());
+        Optional<List<Long>> follows = followService.findOptionalFollowList(userId.get());
+        ModelFollowId model = new ModelFollowId();
+        model.setFollodId(follows.get());
+        System.out.println("follow ıd'leri getir... "+model.toString());
+        producerDirectService.sendFollodId(model);
+        return findByIdResponseDto;
+    }
+
 
 
     /**storage

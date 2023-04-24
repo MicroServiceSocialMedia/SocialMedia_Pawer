@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="css/friendrequests.css">
+
+</head>
+<body>
+
+
+<header>
+  <h1>
+    <img class="header__logo" onclick="homepage()" src="../HtmlPages/images/foot-print.png" alt="">Pawer
+  </h1>
+  <nav>
+    <ul>
+      <li><img class="nav__aboutus" src="../HtmlPages/images/high-five.png"><a href="#">About Us</a></li>
+      <li><img class="nav__contact" src="../HtmlPages/images/hotline.png"><a href="#">Hire Us</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+
+  <aside>
+    <section class="aside__home">
+      <img class="nav__home" onclick="homepage()" src="../HtmlPages/images/home-dark.png" alt="">
+      <label>Home</label>
+    </section>
+
+
+    <section onclick="otherpeople4()" class="aside__otherpeople">
+      <img src="../HtmlPages/images/earth.png" alt="">
+      <label>People4</label>
+    </section>
+
+    <section onclick="friendRequest()" class="aside__friendrequest">
+      <img src="../HtmlPages/images/pet-care.png" alt="">
+      <p>Friend Requests</p>
+      <p id="friendrequestcount"> </p>
+    </section>
+
+    <section onclick="mypost()" class="aside__myposts">
+      <img src="../HtmlPages/images/social-media.png" alt="">
+      <label>My Posts</label>
+    </section>
+
+    <section onclick="fawpostpage()" class="aside__myposts">
+      <img src="../HtmlPages/images/social-media.png" alt="">
+      <label>Faw Posts </label>
+    </section>
+
+
+
+    <section onclick="profile()" class="aside__profile">
+      <img src="https://oyster.ignimgs.com/mediawiki/apis.ign.com/avatar-the-last-airbender/b/b0/Aang_img.jpg"
+           alt="">
+      <label>Profile</label>
+    </section>
+    <button onclick="logout()" class="logout">Log Out</button>
+  </aside>
+
+
+
+
+
+  <div id="profilecart">
+
+  </div>
+
+</main>
+<script>
+  window.addEventListener('load', getProfileCart);
+  window.addEventListener('load', getfriendrequestcount);
+
+
+
+  function profile(){
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/profile.html';
+  }
+
+  function homepage(){
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/index.html';
+  }
+
+  function mypost(){
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/mypost.html';
+  }
+  function otherpeople(){
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/otherpeople.html';
+  }
+  function fawpostpage(){
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/fawposts.html';
+  }
+
+  function friendRequest(){
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/friendrequests.html';
+  }
+
+  function otherpeople4(){
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/otherpeople4.html';
+  }
+
+  function aboutus(){
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/aboutus.html';
+  }
+
+  function logout(){
+    sessionStorage.setItem("token", null);
+    window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/login.html';
+  }
+
+
+
+
+  function getProfileCart() {
+    const token = sessionStorage.getItem("token");
+    const name = document.getElementById('name');
+    const username = document.getElementById('username');
+    const surname = document.getElementById('surname');
+    const content = document.getElementById('content');
+    const email= document.getElementById('email')
+    const id = document.getElementById('id');
+    const follow = document.getElementById('follow');
+    const urluser= 'http://localhost:6260/user/findallrequests';
+    const urlpost= 'http://localhost:6160/post/findallpage';
+
+
+    const data = JSON.stringify({
+      "follow": follow,
+      "name": name,
+      "username": username,
+      "surname": surname,
+      "email": email,
+      "content": content,
+      "id": id
+    });
+    const data2 = {
+
+      "token": token
+    }
+
+    Promise.all([
+      fetch(urluser, {
+        method: 'Post',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data2)
+        ,
+      })
+
+    ])
+            .then(responses => Promise.all(responses.map(response => response.json())))
+            .then(data => { console.log(data[0]), console.log(data[1])
+              for (let index = 0; index < data[0].length; index++) {
+                document.getElementById("profilecart").innerHTML += ` <div class="containerrr">
+      <div class="photo__text">
+        <div>
+        <img
+          src="https://storage.cloud.google.com/pawerallphoto/ErSirm9W4AAwUnt.jpg"
+          alt=""/>
+
+        </div>
+
+        <div class="textt">
+          <h4>${data[0] [index].name} </h4>
+          <h5 >java web</h5>
+         <h5 >123235 posts</h5>
+
+        <button class="btn btn-pink"  onclick="acceptfollowrequest(${index})" >Accept</button>
+        <button class="btn btn-pink"  onclick="rejectfollowrequest(${index})" >Reject</button>
+
+<input hidden="hidden" value=${data[0] [index].username} class="followUsername" id=${index+'in'}  </input>
+
+</div>
+      </div>
+    </div>`;
+
+
+
+              }
+
+            })
+            .catch(error => console.log('error', error));
+  }
+
+
+
+
+  function followbtn(index){
+    const token = sessionStorage.getItem("token");
+    let username = document.getElementById(index+'in').value;
+    const data = {
+      "username" : username,
+      "token": token
+    }
+
+    fetch("http://localhost:6260/user/follow",{
+      method : "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data)
+    })
+            .then((response)=>response.json())
+            .then((response)=>{
+              if (response){
+                  window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/otherpeople4.html';
+
+              }
+              else{
+                window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/otherpeople4.html';
+                console.log(response.message)
+              }
+            })
+            .catch((err) => {
+
+              console.log(err)
+            });
+  }
+
+  function acceptfollowrequest(index){
+    const token = sessionStorage.getItem("token");
+    let username = document.getElementById(index+'in').value;
+    const data = {
+      "username" : username,
+      "token": token
+    }
+
+    fetch("http://localhost:6260/user/acceptfollower",{
+      method : "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data)
+    })
+            .then((response)=>response.json())
+            .then((response)=>{
+              if (response){
+                window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/otherpeople4.html';
+
+              }
+              else{
+                window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/otherpeople4.html';
+                console.log(response.message)
+              }
+            })
+            .catch((err) => {
+
+              console.log(err)
+            });
+  }
+  function rejectfollowrequest(index){
+    const token = sessionStorage.getItem("token");
+    let username = document.getElementById(index+'in').value;
+    const data = {
+      "username" : username,
+      "token": token
+    }
+
+    fetch("http://localhost:6260/user/rejectfollower",{
+      method : "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data)
+    })
+            .then((response)=>response.json())
+            .then((response)=>{
+              if (response){
+                window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/otherpeople4.html';
+
+              }
+              else{
+                window.location.href = 'http://localhost:63342/SocialMedia_Pawer/HtmlPages/otherpeople4.html';
+                console.log(response.message)
+              }
+            })
+            .catch((err) => {
+
+              console.log(err)
+            });
+  }
+
+  function getfriendrequestcount(){
+    const token = sessionStorage.getItem("token");
+    const data = {
+      "token": token
+    }
+
+    fetch("http://localhost:6260/user/findallrequestscount",{
+      method : "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data)
+    })
+            .then((response)=>response.json())
+            .then((response)=>{
+              if (response !== 0){
+                document.getElementById('friendrequestcount').innerHTML = response
+
+              }
+              else{
+                console.log(response.message)
+              }
+            })
+            .catch((err) => {
+
+              console.log(err)
+            });
+  }
+
+</script>
+</body>
+</html>

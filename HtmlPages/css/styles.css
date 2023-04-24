@@ -7,9 +7,10 @@
     --color2: #F8EDE3;
     --color1: #fff9f4;
 }
+
 .dark-theme{
     --color1: #f30505; /*yok */
-    --color2: #232323; /*body tamami */
+    --color2: #57514a; /*body tamami */
     --color3: rgba(185, 164, 142, 0.65); /*header */
     --color4: #646464; /*post arka plani */
     --color5: #ea0808; /*yok */
@@ -20,13 +21,14 @@
     color: var(--color6);
 }
 
+
+
 *{
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 
 }
-
 
 
 body{
@@ -79,21 +81,21 @@ header nav ul li img{
 }
 header nav ul li{
     height: 20px;
-    margin-right: 20px;
+    margin-right: 30px;
 }
 header nav ul li a{
     text-decoration: none;
     color: var(--color7);
 }
-
-
-
-
+.nav__aboutus{
+    cursor: pointer;
+}
 
 aside{
     display: flex;
-    height: auto;
-    margin: 30px 100px 20px 100px;
+    height: 450px;
+    margin: 0px 50px 20px 0;
+    padding-top: 20px;
     flex-direction: column;
     justify-content: space-around;
     align-items: center;
@@ -103,19 +105,17 @@ aside{
     10px 10px 15px rgba(70, 70, 70, 0.15);
 }
 
-.hr{
-    border: none;
-    background-color: var(--color7);
-    height: 3px;
-    width: 75%;
-}
 .aside__home{
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 26px;
     font-weight: 600;
-    border-bottom-color: var(--color7) 3px solid;
+    border-radius: 10px;
+    border: var(--color7) 2px solid;
+    border-inline: var(--color7);
+    padding: 20px;
+
 }
 .aside__home img{
     height: 40px;
@@ -123,9 +123,35 @@ aside{
     border-radius: 50%;
 
 }
+
+.aside__otherpeople{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom-color: var(--color7) 3px solid;
+    cursor: pointer;
+}
+.aside__otherpeople img{
+    height: 30px;
+    margin-right: 10px;
+}
+.aside__friendrequest{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom-color: var(--color7) 3px solid;
+}
+.aside__friendrequest img{
+    height: 30px;
+    margin-right: 10px;
+}
 .aside__myposts{
     display: flex;
     align-items: center;
+}
+.aside__myposts img{
+   height: 20px;
+    margin-right: 10px;
 }
 .listspan{
     margin-right: 10px;
@@ -147,8 +173,8 @@ aside{
 }
 
 .logout{
-    width: 70px;
-    height: 30px;color: var(--color2);
+    width: 90px;
+    height: 40px;color: var(--color2);
     background-color: var(--color7);
     border-radius: 10px;
     border: none;
@@ -165,21 +191,40 @@ aside{
 .main__section{
     display: flex;
     flex-direction: column;
+    align-items: center;
     width: 66%;
     margin: 20px;
 }
 
-/*tweet box*/
-.pawerbox__input img{
-    border-radius: 50%;
-    height: 40px;
-}
+/*pawer box*/
 
 .pawerbox{
     padding-bottom: 10px;
     justify-content: center;
-    width: 75%;
+    width: 100%;
 
+}
+.pawerbox__input{
+    display: flex;
+    flex-direction: column;
+}
+
+.pawerbox__input img{
+    border-radius: 50%;
+    height: 40px;
+}
+.pawerbox__input__file{
+    border-radius: 10%;
+    margin-left: 10%;
+
+}
+.pawerbox__input__file input{
+    background-color: var(--color4);
+    width: 50%;
+}
+
+.pawerbox__btn{
+    display: flex;
 }
 .bottom-line{
     background-color: var(--color7);
@@ -210,6 +255,7 @@ aside{
 
 .md-textarea{
     height: 100px;
+    width: 60%;
     resize: none;
     padding: 20px;
     background-color: var(--color4);
@@ -240,6 +286,7 @@ aside{
 }
 
 /*post*/
+
 .post__avatar img{
     border-radius: 50%;
     height: 40px;
@@ -251,6 +298,18 @@ aside{
     border-bottom: 1px solid var(--color7);
     padding-bottom: 10px;
     padding-top: 10px;
+
+
+}
+
+.post__body{
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: -10px -10px 15px rgba(255, 255, 255, 0.389),
+    10px 10px 15px rgba(70, 70, 70, 0.15),
+    inset -10px -10px 15px rgba(255, 255, 255, 0.3),
+    inset 10px 10px 15px rgba(70, 70, 70, 0.15);
+    width: 500px;
 }
 
 .post__footer{
@@ -270,17 +329,35 @@ aside{
     font-size: 16px;
     color: var(--color7);
 }
+.post__headerText {
+  display: flex;
+    align-items: center;
+}
+#favicon{
+ width: 24px;
+    height: 24px;
+    cursor: pointer;
+
+}
+.divforh3{
+    width: 80%;
+}
 .post__headerText h3{
     font-size: 20px;
     margin-bottom: 5px;
+    margin-left: 20px;
 }
 .post__headerDescription{
     margin-bottom: 10px;
     font-size: 16px;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: -10px -10px 15px rgba(255, 255, 255, 0.389),
+    10px 10px 15px rgba(70, 70, 70, 0.15),
+    inset -10px -10px 15px rgba(255, 255, 255, 0.3),
+    inset 10px 10px 15px rgba(70, 70, 70, 0.15);
 }
-.post__body{
-    padding: 20px;
-}
+
 
 .likecomment:hover{
     cursor: pointer;
@@ -292,19 +369,25 @@ aside{
     display: flex;
     flex-direction: row;
     font-size: 14px;
+    gap: 10px;
 
 }
 .post__date{
     margin-right: 5px;
 }
-.post__time{
-
+.post__like{
+    display: flex;
+    gap: 2px;
+}
+.post__like_img{
+    height: 25px;
+    cursor: pointer;
 }
 
 /*commentwrite*/
-commentwrite__input img{
+.commentwrite__input img{
     border-radius: 50%;
-    height: 40px;
+    height: 30px;
 }
 
 .commentwrite{
@@ -326,19 +409,34 @@ commentwrite__input img{
     font-size: 16px;
 
 }
+.commenttext_avatar p{
+    flex-wrap: wrap;
+    font-weight: bold;
+    color: #020259;
+    width: 80px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+}
 
 .commentwrite-textarea{
-    height: 100px;
+    height: 50px;
     resize: none;
-    padding: 20px;
+    padding: 10px;
     background-color: var(--color2);
     color: var(--color7);
     flex: 1;
     margin-left: 20px;
-    font-size: 16px;
+    font-size: 12px;
     border: none;
     outline: none;
     border-radius: 10px;
+    box-shadow: -10px -10px 15px rgba(37, 43, 87, 0.39),
+    10px 10px 15px rgba(70, 70, 70, 0.15),
+    inset -10px -10px 15px rgba(89, 86, 35, 0.3),
+    inset 10px 10px 15px rgba(70, 70, 70, 0.15);
+
 }
 
 .commentwrite-textarea::placeholder{
@@ -354,14 +452,21 @@ commentwrite__input img{
     border-radius: 10px;
     width: 80px;
     height: 40px;
-    margin-top: 40px;
-    margin-left: auto;
+    margin-top: 5px;
+    margin-left: 100px;
 }
 
 /*commentread*/
+.commentread__header{
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    align-items: center;
+}
+
 .commentread__avatar img{
     border-radius: 50%;
-    height: 40px;
+    height: 20px;
 }
 
 .commentread{
@@ -390,16 +495,14 @@ commentwrite__input img{
     color: var(--color7);
 }
 .commentread__headerText h3{
-    font-size: 18px;
+    font-size: 16px;
     margin-bottom: 5px;
 }
 .commentread__headerDescription{
     margin-bottom: 10px;
     font-size: 14px;
 }
-.commentread__body{
-    padding: 20px;
-}
+
 
 .commentread__timer{
     display: flex;
@@ -616,4 +719,51 @@ commentwrite__input img{
 
 .btn--prev {
     right: calc(100% + 20px);
+}
+
+/*profil cart baslangici *****************/
+#profilecart{
+    display: flex;
+    flex-wrap: wrap;
+
+}
+.profilecartcontainer{
+    font-family: "Sofia", sans-serif;
+    margin: 10px;
+    display: flex;
+    flex-direction: row;
+    border: solid;
+    border-radius: 20px;
+    width: fit-content;
+    max-width: 240px;
+    min-width: 200px;
+}
+
+
+.profilecartphoto img{
+    margin: 10px;
+    width: 60px;
+    height: 60px;
+    border-radius: 200px;
+}
+
+.profilecartalltext .profilecarttitle {
+
+    margin-top: 5px;
+    text-align: center;
+    font-weight: 600;
+    margin-right: 5px;
+    margin-bottom: 6px;
+    font-size: 18px;
+    color: black;
+}
+.profilecartalltext .profilecarttext{
+    text-align: center;
+    font-size: 17px;
+    font-weight: 500;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+hr{
+    width: 100%;
 }

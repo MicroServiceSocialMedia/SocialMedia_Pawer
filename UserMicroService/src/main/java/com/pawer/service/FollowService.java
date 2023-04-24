@@ -1,6 +1,6 @@
 package com.pawer.service;
 
-import com.pawer.dto.request.FollowingUserRequestDto;
+import com.pawer.dto.request.BaseRequestDto;
 import com.pawer.repository.IFollowRepository;
 import com.pawer.repository.entity.Follow;
 import com.pawer.repository.entity.Follower;
@@ -11,7 +11,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -31,10 +32,9 @@ public class FollowService extends ServiceManagerImpl<Follow, Long>  {
 
     public void createFollowForNewUser(Long userId )  {
         int i = 0;
+        System.out.println("follow service threadler kafasına göre calismadi sout ekleyince calisti o yüzden eklendi");
         while ( i <= userService.findAll().size()-1) {
-
             if ( userService.findAll().get(i).getId() == userId || userService.findAll().size()==0){
-
             }else  {
                 Follow follow = new Follow(); // yeni eklenen kişi icin eski kisiler ile olan takiplesme
                 Follow follow1= new Follow(); // eski kisiler icin yeni kisi ile olan takiplesme
@@ -52,7 +52,7 @@ public class FollowService extends ServiceManagerImpl<Follow, Long>  {
     }
 
 
-    public Integer followUser(FollowingUserRequestDto dto) {
+    public Integer followUser(BaseRequestDto dto) {
 
         Optional<Long> userId = jwtTokenManager.validToken(dto.getToken());
         Optional<User> followUser = userService.findOptionalByUsername(dto.getUsername());
@@ -81,8 +81,35 @@ public class FollowService extends ServiceManagerImpl<Follow, Long>  {
         }
     }
 
+    //ben karttaki kullanıcıyı takip ediyor muyum?
+    public Optional<List<Follow>> isFollow(Long userid){
+        List<User> users= userService.findAll();
+        Optional<List<Follow>> follows= Optional.of(new ArrayList<>());
+        for(User user:users){
+            if (user.getId()!=userid){
+                Follow follow = followRepository.findOptionalByUserIdAndFollowId(userid,user.getId()).get();
+                follows.get().add(follow);
+            }
+
+        }
+        return follows;
+    }
+
     public Optional<Follow> findOptionalByUserIdAndFollowId(Long id, Long aLong) {
 
         return followRepository.findOptionalByUserIdAndFollowId(id,aLong);
     }
+
+    public Optional<List<Long>> findOptionalFollowList(Long userId){
+        Optional<List<Long>> followIdList= Optional.of(new ArrayList<>());
+
+        for (Follow follow:followRepository.findOptionalByUserId(userId).get()){
+            if (follow.getFollowRequest()==2){
+                followIdList.get().add(follow.getFollowId());
+            }
+        }
+        return followIdList;
+    }
+
+
 }

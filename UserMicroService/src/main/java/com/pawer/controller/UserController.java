@@ -2,9 +2,9 @@ package com.pawer.controller;
 
 
 import com.pawer.dto.request.*;
+import com.pawer.dto.response.FindAllRequestsResponse;
 import com.pawer.dto.response.FindByIdResponseDto;
-import com.pawer.exception.EErrorType;
-import com.pawer.exception.UserException;
+import com.pawer.dto.response.ProfileCartResponse;
 import com.pawer.repository.entity.User;
 import com.pawer.service.FollowService;
 import com.pawer.service.FollowerService;
@@ -36,22 +36,21 @@ public class UserController {
     }
     @PostMapping("/findbyid")
     @CrossOrigin("*")
-    public ResponseEntity<FindByIdResponseDto> findById(FindByIdRequestDto dto){
+    public ResponseEntity<FindByIdResponseDto> findById(BaseRequestDto dto){
         return ResponseEntity.ok(userService.findByIdFromToken(dto));
     }
 
-    @PostMapping("/createcommenttopost")
+    @PostMapping("/findme")
     @CrossOrigin("*")
-    public ResponseEntity<Boolean> createCommentToPost(@RequestBody CommentToPostDto dto){
-        System.out.println("user controller create comment");
-        System.out.println("dto nun post id'si"+dto.getPostId());
-        return ResponseEntity.ok(userService.createCommentToPost(dto));
+    public ResponseEntity<FindByIdResponseDto> findMe(@RequestBody BaseRequestDto dto){
+        return ResponseEntity.ok(userService.findMe(dto));
     }
+
 
     @PostMapping("/follow")
     @CrossOrigin("*")
-    public  ResponseEntity<Integer> followUser(@RequestBody FollowingUserRequestDto dto){
-        return  ResponseEntity.ok(followService.followUser(dto));
+    public  ResponseEntity<Integer> followUser(@RequestBody BaseRequestDto dto){
+        return ResponseEntity.ok(followService.followUser(dto));
     }
 
     @PostMapping("/acceptfollower")
@@ -59,7 +58,11 @@ public class UserController {
     public  ResponseEntity<Integer> acceptFollower(@RequestBody AcceptFollowerRequestDto dto){
         return  ResponseEntity.ok(followerService.acceptFollower(dto));
     }
-
+    @PostMapping("/rejectfollower")
+    @CrossOrigin("*")
+    public  ResponseEntity<Integer> rejectFollower(@RequestBody AcceptFollowerRequestDto dto){
+        return  ResponseEntity.ok(followerService.rejectFollower(dto));
+    }
     @GetMapping("/findalluser")
     @ResponseBody
     @CrossOrigin("*")
@@ -67,12 +70,27 @@ public class UserController {
         return ResponseEntity.ok(userService.findAll());
     }
 
+    @PostMapping("/findallcarts")
+    @CrossOrigin("*")
+    public ResponseEntity<List<ProfileCartResponse>> findAllForUserCart(@RequestBody BaseRequestDto dto){
+        System.out.println(dto.getToken());
+        return ResponseEntity.ok(userService.isFollow(dto));
+    }
+
+    @PostMapping("/findallrequests")
+    @ResponseBody
+    @CrossOrigin("*")
+    public ResponseEntity<List<FindAllRequestsResponse>> findAllRequests(@RequestBody BaseRequestDto dto){
+        return ResponseEntity.ok(followerService.findAllRequests(dto));
+    }
+
+    @PostMapping("/findallrequestscount")
+    @ResponseBody
+    @CrossOrigin("*")
+    public ResponseEntity<Integer> findAllRequestsCount(@RequestBody BaseRequestDto dto){
+        return ResponseEntity.ok(followerService.findAllRequestsCount(dto));
+    }
 
 
-//    @PostMapping("/removefollower")
-//    @CrossOrigin("*")
-//    public  ResponseEntity<Integer> removeFollower(@RequestBody AcceptFollowerRequestDto dto){
-//        return  ResponseEntity.ok(userService.removeFollower(dto));
-//    }
 
 }

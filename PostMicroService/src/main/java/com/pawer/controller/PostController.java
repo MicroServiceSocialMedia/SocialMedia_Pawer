@@ -1,10 +1,15 @@
 package com.pawer.controller;
 
 
-import com.pawer.dto.request.CommentToPostDto;
+import com.pawer.dto.request.BaseRequestDto;
+import com.pawer.dto.request.CommentToPostRequestDto;
 import com.pawer.dto.response.BaseResponseDto;
-import com.pawer.repository.entity.CommentToPost;
+import com.pawer.dto.response.CommentToPostResponse;
+import com.pawer.dto.response.PostFindAllResponse;
 import com.pawer.repository.entity.Post;
+import com.pawer.service.CommentToPostService;
+import com.pawer.service.FavToPostService;
+import com.pawer.service.LikeToPostService;
 import com.pawer.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,10 +25,36 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final LikeToPostService likeToPostService;
+    private final CommentToPostService commentToPostService;
+    private final FavToPostService favToPostService;
 
 
 
 
+    @PostMapping("/findallpage")
+    @CrossOrigin("*")
+    public ResponseEntity<Page<PostFindAllResponse>> findallPage(@RequestBody BaseResponseDto dto,
+                                                                 @RequestParam(defaultValue = "10")Integer pageSize,
+                                                                 @RequestParam(defaultValue = "0") int pageNumber,
+                                                                 @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+                                                                 @RequestParam(defaultValue = "createDate") String sortParameter){
+
+
+        return ResponseEntity.ok(postService.findAllPosts(dto.getToken(),pageSize,pageNumber,direction,sortParameter));
+    }
+    @PostMapping("/discoverpage")
+    @CrossOrigin("*")
+    public ResponseEntity<Page<PostFindAllResponse>> discover(@RequestBody BaseResponseDto dto,
+                                                                 @RequestParam(defaultValue = "10")Integer pageSize,
+                                                                 @RequestParam(defaultValue = "0") int pageNumber,
+                                                                 @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+                                                                 @RequestParam(defaultValue = "createDate") String sortParameter){
+
+
+        return ResponseEntity.ok(postService.discoverPage(dto.getToken(),pageSize,pageNumber,direction,sortParameter));
+    }
+    /*
     @GetMapping("/findallpage")
     @CrossOrigin("*")
     public ResponseEntity<Page<Post>> findallPage(@RequestParam(defaultValue = "10")Integer pageSize,
@@ -34,58 +65,62 @@ public class PostController {
         return ResponseEntity.ok(postService.findAll(pageSize,pageNumber,direction,sortParameter));
     }
 
+*/
 
-
-    @PostMapping("/findallpageplus")
+    @PostMapping("/createlikepost")
     @CrossOrigin("*")
-    public ResponseEntity<Page<Post>> findallPagePlus(@RequestParam(defaultValue = "10")Integer pageSize,
-                                                      @RequestParam(defaultValue = "0")  Integer pageNumber,
-                                                      @RequestParam(defaultValue = "ASC") Sort.Direction direction,
-                                                      @RequestParam(defaultValue = "createDate") String sortParameter){
-        return ResponseEntity.ok(postService.findAllPlus(pageSize,pageNumber,direction,sortParameter));
-
-    }
-
-    @PostMapping("/findallpageminus")
-    @CrossOrigin("*")
-    public ResponseEntity<Page<Post>> findallPageMinus(@RequestParam(defaultValue = "10")Integer pageSize,
-                                                      @RequestParam(defaultValue = "0")  Integer pageNumber,
-                                                      @RequestParam(defaultValue = "ASC") Sort.Direction direction,
-                                                      @RequestParam(defaultValue = "createDate") String sortParameter){
-        return ResponseEntity.ok(postService.findAllMinus(pageSize,pageNumber,direction,sortParameter));
-
+    public ResponseEntity<Void> createLikePost(@RequestBody BaseRequestDto dto){
+        likeToPostService.createLikePost(dto);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping ("/findallmypost")
     @CrossOrigin("*")
-    public ResponseEntity<Page<Post>> findByToken(@RequestBody BaseResponseDto dto,
-                                                             @RequestParam(defaultValue = "10")Integer pageSize,
-                                                             @RequestParam(defaultValue = "0") int pageNumber,
-                                                             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
-                                                             @RequestParam(defaultValue = "createDate") String sortParameter){
-        System.out.println("----------" + dto.getToken());
-        return ResponseEntity.ok(postService.findByToken(dto.getToken(),pageSize,pageNumber,direction,sortParameter));
+    public ResponseEntity<Page<Post>> findMyPosts(@RequestBody BaseResponseDto dto,
+                                                  @RequestParam(defaultValue = "10")Integer pageSize,
+                                                  @RequestParam(defaultValue = "0") int pageNumber,
+                                                  @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+                                                  @RequestParam(defaultValue = "createDate") String sortParameter){
+        return ResponseEntity.ok(postService.myPost(dto.getToken(),pageSize,pageNumber,direction,sortParameter));
     }
 
     @GetMapping("/findallcomment")
     @CrossOrigin("*")
     @ResponseBody
-    public ResponseEntity<List<CommentToPost>> getCommentList(CommentToPostDto dto){
-        System.out.println("getall post post dto -->>> "+dto.getPostId());
-        return ResponseEntity.ok(postService.findAllComment(dto));
+    public ResponseEntity<List<CommentToPostResponse>> getCommentList(BaseRequestDto dto){
+        return ResponseEntity.ok(commentToPostService.findAllComment(dto));
+    }
+
+    @PostMapping("/likepost")
+    @CrossOrigin("*")
+    @ResponseBody
+    public ResponseEntity<Integer> getLikeCount(BaseRequestDto dto){
+        return ResponseEntity.ok(likeToPostService.likePostCount(dto));
     }
 
 
 
+    @PostMapping("/createfavpost")
+    @CrossOrigin("*")
+    public ResponseEntity<Boolean> createFavPost(@RequestBody BaseRequestDto dto){
+        return ResponseEntity.ok(favToPostService.createFavPost(dto));
+    }
 
-    // public PageRequest next() {
-    //    return new PageRequest(getPageNumber() + 1, getPageSize(), getSort());
-    //}
+    @PostMapping("/myfavtopostlist")
+    @CrossOrigin("*")
+    public ResponseEntity<List<PostFindAllResponse>> myFavPostList(@RequestBody BaseRequestDto dto){
+        return ResponseEntity.ok(favToPostService.myFavPostList(dto));
+    }
+
+    @PostMapping("/createcommenttopost")
+    @CrossOrigin("*")
+    public ResponseEntity<Void> createCommentToPost(@RequestBody CommentToPostRequestDto dto){
+        commentToPostService.createCommentToPost(dto);
+        return ResponseEntity.ok().build();
+    }
 
 
-//
-//    public PageRequest previous() {
-//        return getPageNumber() == 0 ? this : new PageRequest(getPageNumber() - 1, getPageSize(), getSort());
+
 
 }
 
